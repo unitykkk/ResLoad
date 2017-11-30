@@ -18,8 +18,8 @@ namespace ResLoad
 			Console.WriteLine ("");
 
 			//方案2，用系统异步加载API
-//			timer2 = new TimeCounter("系统异步方案-");
-//			LoadFilesAsync();
+			timer2 = new TimeCounter("系统异步方案-");
+			LoadFilesAsync();
 
 			//方案3：用自写API
 			LoadFilesBySelf();
@@ -76,6 +76,7 @@ namespace ResLoad
 			if (AsyncfileCount == TaskMgr.Ins.ResInfoDic.Count) 
 			{
 				timer2.CostTime();
+				Console.WriteLine ("");
 			}
 		}
 		#endregion
@@ -93,7 +94,7 @@ namespace ResLoad
 				string resName = keys[i];
 
 				ResMgr.Ins.Load(resName, delegate(TaskInfo info, byte[] datas){
-					//ConsoleMgr.LogGreen("Load Resource Success:" + info.resName);
+//					ConsoleMgr.LogGreen("Load Resource Success:" + info.resName);
 					var temp = datas;
 					SelfFileCount++;
 					if (SelfFileCount == TaskMgr.Ins.ResInfoDic.Count)
