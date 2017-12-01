@@ -3,6 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using System.IO;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Text.RegularExpressions;
 
 
 namespace ResLoad
@@ -18,57 +21,8 @@ namespace ResLoad
 				if (ins == null)
 				{
 					ins = new TaskMgr();
-					ins.Init();
 				}
 				return ins;
-			}
-		}
-		#endregion
-
-
-		#region 初始化
-		private void Init()
-		{
-			LoadResInfos ();
-		}
-
-		private Dictionary<string, ResInfo> m_ResInfoDic = null;
-        //测试用
-        public Dictionary<string, ResInfo> ResInfoDic
-        {
-            get
-            {
-                return m_ResInfoDic;
-            }
-        }
-
-		/// <summary>
-		/// 加载打包后存有各资源信息的Txt文件
-		/// </summary>
-		private void LoadResInfos()
-		{
-			m_ResInfoDic = new Dictionary<string, ResInfo>();
-
-			FileStream fs = new FileStream(GlobalSetting.PackedTxtPath, FileMode.Open);
-			StreamReader sr = new StreamReader(fs);
-			string lineStr;
-			while ((lineStr = sr.ReadLine()) != null)
-			{
-				if(!lineStr.Equals(string.Empty))
-				{
-					string[] items =lineStr.Split('\t');
-					if(items.Length != 3)
-					{
-						ConsoleMgr.LogRed("错误");
-					}
-					else
-					{
-						ResInfo tempInfo = new ResInfo();
-						tempInfo.StartPos = Convert.ToInt32(items[1]);
-						tempInfo.Size = Convert.ToInt32(items[2]);
-						m_ResInfoDic.Add(items[0],tempInfo);
-					}
-				}
 			}
 		}
 		#endregion
@@ -168,7 +122,7 @@ namespace ResLoad
                     //如果当前线程正在执行任务
                     else
                     {
-                        Thread.Sleep(10);
+//                        Thread.Sleep(10);
                     }
                 }
             }
@@ -176,7 +130,7 @@ namespace ResLoad
 		#endregion
 
 
-		#region 从合并后的大文件中获取其中的某个小文件
+		#region 执行某项加载任务（从资源包中加载某项资源）
         private static object IoLockObj = new object();
 		private static FileStream fs = null;
 		private void LoadItem(TaskInfo nextInfo)
@@ -192,9 +146,9 @@ namespace ResLoad
 					}
 
 					//Seek索引默认从0开始(注意,不是从1开始)
-                    fs.Seek(m_ResInfoDic[nextInfo.resName].StartPos, SeekOrigin.Begin);
+					fs.Seek(ResMgr.Ins.ResInfoDic[nextInfo.resName].StartPos, SeekOrigin.Begin);
 
-                    byte[] datas = new byte[m_ResInfoDic[nextInfo.resName].Size];// 要读取的内容会放到这个数组里
+					byte[] datas = new byte[ResMgr.Ins.ResInfoDic[nextInfo.resName].Size];// 要读取的内容会放到这个数组里
                     fs.Read(datas, 0, datas.Length);// 开始读取，读取的内容放到datas数组里，0是从第一个开始放，datas.length是最多允许放多少个
 
 //                    fs.Flush();
@@ -202,9 +156,9 @@ namespace ResLoad
 
                     nextInfo.threadInfo.isDoingTask = false;
 
-                    if (nextInfo.resLoadedCallBack != null)
+					if (nextInfo.commonCallBack != null)
                     {
-						nextInfo.resLoadedCallBack(nextInfo, datas);
+						nextInfo.commonCallBack(nextInfo, datas);
                     }
                 }
             }
@@ -224,7 +178,8 @@ namespace ResLoad
 		public bool isFinished = false;                 //该文件是否统计完成
 		public bool isSave = false;    					//该文件是否要缓存
 		public string resName = string.Empty;          	//要加载的资源名
-		public ResLoadedAction resLoadedCallBack;       //任务完成的回调
+		public ResLoadedCallBack commonCallBack;        //任务完成通用回调
+		public ResLoadedCallBack itemCallBack;       	//任务完成单项回调
 		public ThreadInfo threadInfo;
 	}
 
@@ -241,11 +196,11 @@ namespace ResLoad
 	}
 
 	/// <summary>
-	/// 要加载的资源文件信息
+	/// 资源打包后的信息
 	/// </summary>
 	public class ResInfo
 	{
-		public int StartPos;        	//资源存放的起始位置
-		public int Size;            	//资源大小(字节)
+		public long StartPos;        					//资源在资源包中存放的起始位置
+		public int Size;            					//资源大小(字节)
 	}
 }
