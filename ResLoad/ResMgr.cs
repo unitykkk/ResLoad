@@ -41,7 +41,7 @@ namespace ResLoad
 		}
 
 		private static object LoadedActionQueueObj = new object();
-		private Queue<ResLoadInfo> m_LoadedActionQueue = new Queue<ResLoadInfo> ();
+		private Queue<ResLoadedInfo> m_LoadedInfosQueue = new Queue<ResLoadedInfo> ();
 
 		public object DataObj = new object ();
 		private Dictionary<string, byte[]> m_LoadedDataDic = new Dictionary<string, byte[]> ();
@@ -183,10 +183,10 @@ namespace ResLoad
 
 			lock (LoadedActionQueueObj) 
 			{
-				ResLoadInfo tempInfo = new ResLoadInfo ();
+				ResLoadedInfo tempInfo = new ResLoadedInfo ();
 				tempInfo.info = info;
 				tempInfo.datas = datas;
-				m_LoadedActionQueue.Enqueue (tempInfo);
+				m_LoadedInfosQueue.Enqueue (tempInfo);
 			}
 		}
 		#endregion
@@ -211,29 +211,29 @@ namespace ResLoad
 			{
 				lock (LoadedActionQueueObj)     //本类的子线程
 				{
-					if (m_LoadedActionQueue.Count > 0)
+					if (m_LoadedInfosQueue.Count > 0)
 					{
 						for (int i = 0; i < MMaxDealCount; i++)
 						{
-							if (m_LoadedActionQueue.Count > 0)
+							if (m_LoadedInfosQueue.Count > 0)
 							{
-								ResLoadInfo loadInfo = m_LoadedActionQueue.Dequeue();
-								if (loadInfo.info.itemCallBack != null)
+								ResLoadedInfo itemLoadedInfo = m_LoadedInfosQueue.Dequeue();
+								if (itemLoadedInfo.info.itemCallBack != null)
 								{
-									loadInfo.info.itemCallBack(loadInfo.info, loadInfo.datas);
+									itemLoadedInfo.info.itemCallBack(itemLoadedInfo.info, itemLoadedInfo.datas);
 
 									lock (DataObj) 
 									{
-										if (!loadInfo.info.isSave) 
+										if (!itemLoadedInfo.info.isSave) 
 										{
-											if (m_LoadedDataDic.ContainsKey (loadInfo.info.resName)) 
+											if (m_LoadedDataDic.ContainsKey (itemLoadedInfo.info.resName)) 
 											{
-												m_LoadedDataDic.Remove (loadInfo.info.resName);
+												m_LoadedDataDic.Remove (itemLoadedInfo.info.resName);
 											}
 										} 
 										else 
 										{
-											m_LoadedDataDic [loadInfo.info.resName] = loadInfo.datas;
+											m_LoadedDataDic [itemLoadedInfo.info.resName] = itemLoadedInfo.datas;
 										}
 									}
 								}
@@ -257,7 +257,7 @@ namespace ResLoad
 	/// <summary>
 	/// 资源加载信息
 	/// </summary>
-	public class ResLoadInfo
+	public class ResLoadedInfo
 	{
 		public TaskInfo info;        	//资源加载任务信息
 		public byte[] datas;			//资源加载后获取到的数据

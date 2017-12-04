@@ -142,7 +142,7 @@ namespace ResLoad
 //					FileStream fs = new FileStream(GlobalSetting.PackedFilePath, FileMode.Open);//这里后期可能会优化,因为游戏很可能要一直不断加载资源,这个fs可考虑不用临时,只创建一个
 					if(fs == null)
 					{
-						fs = new FileStream(GlobalSetting.PackedFilePath, FileMode.Open);
+						fs = new FileStream(GlobalSetting.PackedFilePath, FileMode.Open, FileAccess.Read);
 					}
 
 					//Seek索引默认从0开始(注意,不是从1开始)
