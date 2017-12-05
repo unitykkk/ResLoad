@@ -35,7 +35,7 @@ namespace ResLoad
 		/// </summary>
 		private static void LoadFiles()
 		{
-			string[] filePaths = Directory.GetFiles(GlobalSetting.PackFolderPath, "*.*", SearchOption.AllDirectories);
+			string[] filePaths = Directory.GetFiles(GlobalSetting.PackFromFolderPath, "*.*", SearchOption.AllDirectories);
 			for (int i = 0; i < filePaths.Length; i++) 
 			{
 				FileStream fs = new FileStream(filePaths[i], FileMode.Open);
@@ -56,7 +56,7 @@ namespace ResLoad
 		/// </summary>
 		private static void LoadFilesAsync()
 		{
-			string[] filePaths = Directory.GetFiles(GlobalSetting.PackFolderPath, "*.*", SearchOption.AllDirectories);
+			string[] filePaths = Directory.GetFiles(GlobalSetting.PackFromFolderPath, "*.*", SearchOption.AllDirectories);
 			for (int i = 0; i < filePaths.Length; i++) 
 			{
 				FileStream fs = new FileStream(filePaths[i], FileMode.Open);
@@ -77,7 +77,7 @@ namespace ResLoad
 			string filePath = (string)ar.AsyncState;
 //			ConsoleMgr.LogGreen("系统已异步加载完" + filePath);
 			AsyncfileCount++;
-			if (AsyncfileCount == ResMgr.Ins.ResInfoDic.Count) 
+			if (AsyncfileCount == ResMgr.Ins.FilesPackInfoDic.Count) 
 			{
 				timer2.CostTime();
 				Console.WriteLine ("");
@@ -90,22 +90,28 @@ namespace ResLoad
 		private static int SelfFileCount = 0;
 		private static void LoadFilesBySelf()
 		{
-			List<string> keys = new List<string>(ResMgr.Ins.ResInfoDic.Keys);
+			List<string> keys = new List<string>(ResMgr.Ins.FilesPackInfoDic.Keys);
 
 			TimeCounter timer3 = new TimeCounter("我的方案-");
 			for (int i = 0; i < keys.Count; i++)
 			{
 				string resName = keys[i];
 
-				ResMgr.Ins.Load(resName, delegate(TaskInfo info, byte[] datas){
-//					ConsoleMgr.LogGreen("Load Resource Success:" + info.resName);
-					var temp = datas;
+				byte[] returnData = ResMgr.Ins.Load(resName);
+				if ((returnData != null) && (returnData.Length > 0)) 
+				{
 					SelfFileCount++;
-					if (SelfFileCount == ResMgr.Ins.ResInfoDic.Count)
-					{
-						timer3.CostTime();
-					}
-				}, true);
+				} 
+				else 
+				{
+					int iii = 0;
+					ConsoleMgr.LogRed ("错误:获取不到文件名为" + resName + "的数据，该文件数据可能为空!");
+				}
+			}
+
+			if (SelfFileCount == ResMgr.Ins.FilesPackInfoDic.Count) 
+			{
+				timer3.CostTime ();
 			}
 		}
 		#endregion

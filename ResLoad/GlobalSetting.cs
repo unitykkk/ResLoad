@@ -5,13 +5,13 @@ namespace ResLoad
 	public class GlobalSetting
 	{
 		/// <summary>
-		/// 要打包的文件夹
+		/// 要打包的源文件夹
 		/// </summary>
-		public static string PackFolderPath = @"/Users/huzhen/Desktop/ResPack/Src";
+		public static string PackFromFolderPath = @"/Users/huzhen/Desktop/ResPack/FromFolder";
 		/// <summary>
-		/// 打包完成后的文件
+		/// 打包完成后的资源包所存放的文件夹
 		/// </summary>
-		public static string PackedFilePath = @"/Users/huzhen/Desktop/ResPack/total.bin";
+		public static string PackToFolderPath = @"/Users/huzhen/Desktop/ResPack/ToFolder";
 
 		/// <summary>
 		/// 允许创建线程的最大数量

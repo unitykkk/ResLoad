@@ -7,8 +7,6 @@ using System.Threading;
 
 namespace ResLoad
 {
-	public delegate void ResLoadedCallBack(TaskInfo info, byte[] datas);
-
 	public class ResMgr
 	{
 		#region 单例
@@ -30,20 +28,26 @@ namespace ResLoad
 
 
 		#region Data
-		private Dictionary<string, ResInfo> m_ResInfoDic = null;
+		private Dictionary<string, ResPackageInfo> m_PackedResInfosDic = new Dictionary<string, ResPackageInfo>();
 
-		public Dictionary<string, ResInfo> ResInfoDic
+		public Dictionary<string, ResPackageInfo> PackedResInfosDic
 		{
 			get
 			{
-				return m_ResInfoDic;
+				return m_PackedResInfosDic;
 			}
 		}
 
-		private static object LoadedActionQueueObj = new object();
-		private Queue<ResLoadedInfo> m_LoadedInfosQueue = new Queue<ResLoadedInfo> ();
+		private Dictionary<string, PackedFileInfo> m_FilesPackInfoDic = new Dictionary<string, PackedFileInfo>();
 
-		public object DataObj = new object ();
+		public Dictionary<string, PackedFileInfo> FilesPackInfoDic
+		{
+			get
+			{
+				return m_FilesPackInfoDic;
+			}
+		}
+
 		private Dictionary<string, byte[]> m_LoadedDataDic = new Dictionary<string, byte[]> ();
 		#endregion
 
@@ -51,123 +55,68 @@ namespace ResLoad
 		#region 初始化
 		private void Init()
 		{
-			LoadResInfos ();
-		}
-
-		/// <summary>
-		/// 从资源包里面加载打包后各资源的信息
-		/// </summary>
-		private void LoadResInfos()
-		{
-			m_ResInfoDic = new Dictionary<string, ResInfo>();
-
-			FileStream fs = new FileStream(GlobalSetting.PackedFilePath, FileMode.Open);
-
-			//读取资源信息块长度
-			byte[] infoRegionLengthData = new byte[2];		//ushort
-			fs.Read(infoRegionLengthData, 0, 2);
-			ushort infoLength = ReadUshort(infoRegionLengthData);
-
-			for (int nowPos = 0; nowPos < infoLength;) 
+			string[] resPaths = Directory.GetFiles (GlobalSetting.PackToFolderPath, "*", SearchOption.TopDirectoryOnly);
+			for (int n = 0; n < resPaths.Length; n++) 
 			{
-				ResInfo tempInfo = new ResInfo();
-				//读取文件名字节长度
-				byte[] nameLengthData = new byte[2];
-				fs.Read(nameLengthData, 0, 2);
-				ushort nameLength = ReadUshort(nameLengthData);
-				nowPos += 2;
-				//读取文件名
-				byte[] nameData = new byte[nameLength];
-				fs.Read(nameData, 0, nameLength);
-				string resName = ReadString (nameData);
-				nowPos += nameLength;
-				//读取文件起始位置
-				byte[] startPosData = new byte[4];
-				fs.Read(startPosData, 0, 4);
-				tempInfo.StartPos = ReadUint(startPosData);
-				nowPos += 4;
-				//读取文件大小
-				byte[] sizeData = new byte[4];
-				fs.Read(sizeData, 0, 4);
-				tempInfo.Size = ReadInt(sizeData);
-				nowPos += 4;
-
-				m_ResInfoDic.Add (resName, tempInfo);
+				FileInfo tempResFileInfo = new FileInfo (resPaths [n]);
+				if (tempResFileInfo.Extension.ToLower ().Equals (".bin")) 
+				{
+					FilePackInfoReader.Read(ref m_PackedResInfosDic, ref m_FilesPackInfoDic, resPaths[n]);
+				}
 			}
-
-			fs.Flush();
-			fs.Close();
-		}
-
-		private ushort ReadUshort(byte[] datas)
-		{
-			return BitConverter.ToUInt16 (datas, 0);
-		}
-
-		private string ReadString(byte[] datas)
-		{
-			string str = System.Text.Encoding.UTF8.GetString (datas);
-			return str;
-		}
-
-		private uint ReadUint(byte[] datas)
-		{
-			return BitConverter.ToUInt32 (datas, 0);
-		}
-
-		private int ReadInt(byte[] datas)
-		{
-			return BitConverter.ToInt32 (datas, 0);
 		}
 		#endregion
 
 
 		#region 提供给外部的接口
-		public byte[] Load(string fileName, ResLoadedCallBack itemCallBack, bool isSave = false)		//这里同时加载同一个资源时，可能会有问题
+		public byte[] Load(string fileName, bool isSave = false)
 		{
-			lock (DataObj)
+			if (m_LoadedDataDic.ContainsKey (fileName)) 
 			{
-				if (!m_IsCreatedThread) 
+				byte[] returnData = m_LoadedDataDic [fileName];
+				if (!isSave) 
 				{
-					m_IsCreatedThread = true;
-					CreateTread ();
+					m_LoadedDataDic.Remove (fileName);
 				}
 
-				if (m_LoadedDataDic.ContainsKey (fileName)) 
+				return returnData;
+			} 
+			else 
+			{
+				byte[] fileData = LoadItem (fileName);
+				if (isSave) 
 				{
-					byte[] returnData = m_LoadedDataDic [fileName];
-					if (!isSave) {
-						m_LoadedDataDic.Remove (fileName);
-					}
-
-					return returnData;
-				} 
-				else 
-				{
-					TaskInfo tempTaskInfo = new TaskInfo ();
-					tempTaskInfo.resName = fileName;
-					tempTaskInfo.isSave = isSave;
-					tempTaskInfo.isFinished = false;
-					tempTaskInfo.itemCallBack = itemCallBack;
-					tempTaskInfo.commonCallBack = Ins.ResLoadedCommonCallBack;
-//					tempTaskInfo.commonCallBack = itemCallBack;
-					TaskMgr.Ins.Load (tempTaskInfo);
-
-					return null;
+					m_LoadedDataDic [fileName] = fileData;
 				}
+				return fileData;
 			}
 		}
 
 		/// <summary>
-		/// 获取资源信息
+		/// 获取资源包信息
 		/// </summary>
-		/// <returns>资源信息</returns>
-		/// <param name="resName">资源名</param>
-		public ResInfo GetInfo(string resName)
+		/// <returns>The res package info.</returns>
+		/// <param name="resName">Res name.</param>
+		public ResPackageInfo GetResPackageInfo(string resName)
 		{
-			if (m_ResInfoDic.ContainsKey (resName)) 
+			if (m_PackedResInfosDic.ContainsKey (resName)) 
 			{
-				return m_ResInfoDic [resName];
+				return m_PackedResInfosDic [resName];
+			}
+
+			return null;
+		}
+
+		/// <summary>
+		/// 获取文件打包后的信息
+		/// </summary>
+		/// <returns>文件打包后的信息</returns>
+		/// <param name="resName">文件名</param>
+		public PackedFileInfo GetFileInfo(string fileName)
+		{
+			if (m_FilesPackInfoDic.ContainsKey (fileName)) 
+			{
+				return m_FilesPackInfoDic [fileName];
 			}
 
 			return null;
@@ -175,92 +124,48 @@ namespace ResLoad
 		#endregion
 
 
-		#region Event
-		private void ResLoadedCommonCallBack(TaskInfo info, byte[] datas)
+		private byte[] LoadItem(string fileName)
 		{
-//			ConsoleMgr.LogGreen("ResLoadedCommonCallBack Success:" + info.resName);
-//			var temp = datas;
-
-			lock (LoadedActionQueueObj) 
+			try
 			{
-				ResLoadedInfo tempInfo = new ResLoadedInfo ();
-				tempInfo.info = info;
-				tempInfo.datas = datas;
-				m_LoadedInfosQueue.Enqueue (tempInfo);
+				string resPath = GlobalSetting.PackToFolderPath + @"/" + ResMgr.Ins.FilesPackInfoDic[fileName].ResName + ".bin";
+				FileStream fs = new FileStream(resPath, FileMode.Open, FileAccess.Read);
+
+				//Seek索引默认从0开始(注意,不是从1开始)
+				fs.Seek(ResMgr.Ins.FilesPackInfoDic[fileName].StartPos, SeekOrigin.Begin);
+
+				byte[] datas = new byte[ResMgr.Ins.FilesPackInfoDic[fileName].Size];// 要读取的内容会放到这个数组里
+				fs.Read(datas, 0, datas.Length);// 开始读取，读取的内容放到datas数组里，0是从第一个开始放，datas.length是最多允许放多少个
+				return datas;
+
+			}
+			catch(Exception e)
+			{
+				Console.WriteLine(e.ToString());
+				return null;
 			}
 		}
-		#endregion
 
-
-		#region Thread
-		private bool m_IsCreatedThread = false;
-		private int MMaxDealCount = 20;
-
-
-		private void CreateTread()
-		{
-			Thread thread = new Thread(ThreadFunc);
-			thread.Name = "线程Deal";
-			//给方法传值,启动线程
-			thread.Start();
-		}
-
-		public void ThreadFunc()
-		{
-			while (true)
-			{
-				lock (LoadedActionQueueObj)     //本类的子线程
-				{
-					if (m_LoadedInfosQueue.Count > 0)
-					{
-						for (int i = 0; i < MMaxDealCount; i++)
-						{
-							if (m_LoadedInfosQueue.Count > 0)
-							{
-								ResLoadedInfo itemLoadedInfo = m_LoadedInfosQueue.Dequeue();
-								if (itemLoadedInfo.info.itemCallBack != null)
-								{
-									itemLoadedInfo.info.itemCallBack(itemLoadedInfo.info, itemLoadedInfo.datas);
-
-									lock (DataObj) 
-									{
-										if (!itemLoadedInfo.info.isSave) 
-										{
-											if (m_LoadedDataDic.ContainsKey (itemLoadedInfo.info.resName)) 
-											{
-												m_LoadedDataDic.Remove (itemLoadedInfo.info.resName);
-											}
-										} 
-										else 
-										{
-											m_LoadedDataDic [itemLoadedInfo.info.resName] = itemLoadedInfo.datas;
-										}
-									}
-								}
-							}
-							else
-							{
-								break;
-							}
-						}
-					}
-					else
-					{
-//						Thread.Sleep(10);
-					}
-				}
-			}
-		}
-		#endregion
 	}
 
 	/// <summary>
-	/// 资源加载信息
+	/// 文件打包后的信息
 	/// </summary>
-	public class ResLoadedInfo
+	public class PackedFileInfo
 	{
-		public TaskInfo info;        	//资源加载任务信息
-		public byte[] datas;			//资源加载后获取到的数据
+		public string ResName;							//文件在哪个资源包中
+		public long StartPos;        					//文件在资源包中存放的起始位置
+		public int Size;            					//文件大小(字节)
+	}
+
+	/// <summary>
+	/// 打包后资源包的信息
+	/// </summary>
+	public class ResPackageInfo
+	{
+		public int Version = 0;
+		public string TypeName = string.Empty;
+		public uint TotalSize = 0;
 	}
 }
 
