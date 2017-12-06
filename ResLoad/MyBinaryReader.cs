@@ -2,6 +2,9 @@
 
 namespace ResLoad
 {
+	/// <summary>
+	/// 二进制内容解读器
+	/// </summary>
 	public class MyBinaryReader
 	{
 		public static ushort ReadUshort(byte[] datas)

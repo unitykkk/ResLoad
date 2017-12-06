@@ -12,11 +12,10 @@ namespace ResLoad
 		/// 打包完成后的资源包所存放的文件夹
 		/// </summary>
 		public static string PackToFolderPath = @"/Users/huzhen/Desktop/ResPack/ToFolder";
-
 		/// <summary>
-		/// 允许创建线程的最大数量
+		/// 打包后资源包的扩展名
 		/// </summary>
-		public const int MThreadMaxCount = 3;
+		public static string PackageExtension = ".bin";
 	}
 }
 

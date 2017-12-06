@@ -77,7 +77,7 @@ namespace ResLoad
 			string filePath = (string)ar.AsyncState;
 //			ConsoleMgr.LogGreen("系统已异步加载完" + filePath);
 			AsyncfileCount++;
-			if (AsyncfileCount == ResMgr.Ins.FilesPackInfoDic.Count) 
+			if (AsyncfileCount == ResMgr.Ins.PackFilesCount) 
 			{
 				timer2.CostTime();
 				Console.WriteLine ("");
@@ -90,14 +90,14 @@ namespace ResLoad
 		private static int SelfFileCount = 0;
 		private static void LoadFilesBySelf()
 		{
-			List<string> keys = new List<string>(ResMgr.Ins.FilesPackInfoDic.Keys);
+			List<string> packedFileNames = ResMgr.Ins.PackedFileNames;
 
 			TimeCounter timer3 = new TimeCounter("我的方案-");
-			for (int i = 0; i < keys.Count; i++)
+			for (int i = 0; i < packedFileNames.Count; i++)
 			{
-				string resName = keys[i];
+				string fileName = packedFileNames[i];
 
-				byte[] returnData = ResMgr.Ins.Load(resName);
+				byte[] returnData = ResMgr.Ins.Load(fileName);
 				if ((returnData != null) && (returnData.Length > 0)) 
 				{
 					SelfFileCount++;
@@ -105,11 +105,11 @@ namespace ResLoad
 				else 
 				{
 					int iii = 0;
-					ConsoleMgr.LogRed ("错误:获取不到文件名为" + resName + "的数据，该文件数据可能为空!");
+					ConsoleMgr.LogRed ("错误:获取不到文件名为" + fileName + "的数据，该文件数据可能为空!");
 				}
 			}
 
-			if (SelfFileCount == ResMgr.Ins.FilesPackInfoDic.Count) 
+			if (SelfFileCount == ResMgr.Ins.PackFilesCount) 
 			{
 				timer3.CostTime ();
 			}

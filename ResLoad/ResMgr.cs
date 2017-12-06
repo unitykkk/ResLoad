@@ -28,23 +28,23 @@ namespace ResLoad
 
 
 		#region Data
-		private Dictionary<string, ResPackageInfo> m_PackedResInfosDic = new Dictionary<string, ResPackageInfo>();
-
-		public Dictionary<string, ResPackageInfo> PackedResInfosDic
-		{
-			get
-			{
-				return m_PackedResInfosDic;
-			}
-		}
+		private Dictionary<string, PackageInfo> m_PackedResInfosDic = new Dictionary<string, PackageInfo>();
 
 		private Dictionary<string, PackedFileInfo> m_FilesPackInfoDic = new Dictionary<string, PackedFileInfo>();
 
-		public Dictionary<string, PackedFileInfo> FilesPackInfoDic
+		public List<string> PackedFileNames
 		{
 			get
 			{
-				return m_FilesPackInfoDic;
+				return new List<string> (m_FilesPackInfoDic.Keys);
+			}
+		}
+
+		public int PackFilesCount
+		{
+			get
+			{
+				return m_FilesPackInfoDic.Count;
 			}
 		}
 
@@ -59,7 +59,7 @@ namespace ResLoad
 			for (int n = 0; n < resPaths.Length; n++) 
 			{
 				FileInfo tempResFileInfo = new FileInfo (resPaths [n]);
-				if (tempResFileInfo.Extension.ToLower ().Equals (".bin")) 
+				if (tempResFileInfo.Extension.ToLower ().Equals (GlobalSetting.PackageExtension.ToLower())) 
 				{
 					FilePackInfoReader.Read(ref m_PackedResInfosDic, ref m_FilesPackInfoDic, resPaths[n]);
 				}
@@ -69,6 +69,11 @@ namespace ResLoad
 
 
 		#region 提供给外部的接口
+		/// <summary>
+		/// 加载文件内容
+		/// </summary>
+		/// <param name="fileName">要加载的文件名（相对路径）</param>
+		/// <param name="isSave">If set to <c>true</c> 该文件加载后的内容是否需要缓存 </param>
 		public byte[] Load(string fileName, bool isSave = false)
 		{
 			if (m_LoadedDataDic.ContainsKey (fileName)) 
@@ -96,19 +101,19 @@ namespace ResLoad
 		/// 获取资源包信息
 		/// </summary>
 		/// <returns>The res package info.</returns>
-		/// <param name="resName">Res name.</param>
-		public ResPackageInfo GetResPackageInfo(string resName)
+		/// <param name="packageName">package name.</param>
+		public PackageInfo GetPackageInfo(string packageName)
 		{
-			if (m_PackedResInfosDic.ContainsKey (resName)) 
+			if (m_PackedResInfosDic.ContainsKey (packageName)) 
 			{
-				return m_PackedResInfosDic [resName];
+				return m_PackedResInfosDic [packageName];
 			}
 
 			return null;
 		}
 
 		/// <summary>
-		/// 获取文件打包后的信息
+		/// 获取打包后的文件信息
 		/// </summary>
 		/// <returns>文件打包后的信息</returns>
 		/// <param name="resName">文件名</param>
@@ -123,18 +128,22 @@ namespace ResLoad
 		}
 		#endregion
 
-
+		/// <summary>
+		/// 从资源包中加载某一个文件内容
+		/// </summary>
+		/// <returns>The item.</returns>
+		/// <param name="fileName">File name.</param>
 		private byte[] LoadItem(string fileName)
 		{
 			try
 			{
-				string resPath = GlobalSetting.PackToFolderPath + @"/" + ResMgr.Ins.FilesPackInfoDic[fileName].ResName + ".bin";
-				FileStream fs = new FileStream(resPath, FileMode.Open, FileAccess.Read);
+				string packagePath = GlobalSetting.PackToFolderPath + @"/" + m_FilesPackInfoDic[fileName].PackageName + GlobalSetting.PackageExtension;
+				FileStream fs = new FileStream(packagePath, FileMode.Open, FileAccess.Read);
 
 				//Seek索引默认从0开始(注意,不是从1开始)
-				fs.Seek(ResMgr.Ins.FilesPackInfoDic[fileName].StartPos, SeekOrigin.Begin);
+				fs.Seek(m_FilesPackInfoDic[fileName].StartPos, SeekOrigin.Begin);
 
-				byte[] datas = new byte[ResMgr.Ins.FilesPackInfoDic[fileName].Size];// 要读取的内容会放到这个数组里
+				byte[] datas = new byte[m_FilesPackInfoDic[fileName].Size];// 要读取的内容会放到这个数组里
 				fs.Read(datas, 0, datas.Length);// 开始读取，读取的内容放到datas数组里，0是从第一个开始放，datas.length是最多允许放多少个
 				return datas;
 
@@ -153,7 +162,7 @@ namespace ResLoad
 	/// </summary>
 	public class PackedFileInfo
 	{
-		public string ResName;							//文件在哪个资源包中
+		public string PackageName;						//文件在哪个资源包中
 		public long StartPos;        					//文件在资源包中存放的起始位置
 		public int Size;            					//文件大小(字节)
 	}
@@ -161,7 +170,7 @@ namespace ResLoad
 	/// <summary>
 	/// 打包后资源包的信息
 	/// </summary>
-	public class ResPackageInfo
+	public class PackageInfo
 	{
 		public int Version = 0;
 		public string TypeName = string.Empty;
