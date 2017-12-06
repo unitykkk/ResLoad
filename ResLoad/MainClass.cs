@@ -10,22 +10,28 @@ namespace ResLoad
 {
 	class MainClass
 	{
+		private static LoadSpeedTester SpeedTester1 = null;
+		private static LoadSpeedTester SpeedTester2 = null;
+		private static LoadSpeedTester SpeedTester3 = null;
+
+
 		public static void Main (string[] args)
 		{
 			//方案1：用系统自带API
-			TimeCounter timer1 = new TimeCounter("系统普通方案-");
+			SpeedTester1 = new LoadSpeedTester("系统普通方案: ");
 			LoadFiles ();
-			timer1.CostTime ();
+			SpeedTester1.CountSpeed ();
 			Console.WriteLine ("");
 
-			//方案2，用系统异步加载API
-			timer2 = new TimeCounter("系统异步方案-");
-			LoadFilesAsync();
+//			//方案2，用系统异步加载API
+//			SpeedTester2 = new LoadSpeedTester("系统异步方案-");
+//			LoadFilesAsync();
 
 			Console.WriteLine ("");
 
 			//方案3：用自写API
 			LoadFilesBySelf();
+			PackedFileMgr.Ins.Release ();
 		}
 
 
@@ -42,6 +48,7 @@ namespace ResLoad
 
 				byte[] datas = new byte[fs.Length];
 				fs.Read(datas, 0, datas.Length);
+				SpeedTester1.AddLoaded ((uint)datas.Length);
 
 				fs.Flush();
 				fs.Close();
@@ -71,7 +78,6 @@ namespace ResLoad
 		}
 
 		private static int AsyncfileCount = 0;
-		private static TimeCounter timer2 = null;
 		public static void FileAsyncCallback (IAsyncResult ar)
 		{
 			string filePath = (string)ar.AsyncState;
@@ -79,7 +85,7 @@ namespace ResLoad
 			AsyncfileCount++;
 			if (AsyncfileCount == PackedFileMgr.Ins.PackFilesCount) 
 			{
-				timer2.CostTime();
+				SpeedTester2.CostTime();
 				Console.WriteLine ("");
 			}
 		}
@@ -92,7 +98,7 @@ namespace ResLoad
 		{
 			List<string> packedFileNames = PackedFileMgr.Ins.PackedFileNames;
 
-			TimeCounter timer3 = new TimeCounter("我的方案-");
+			SpeedTester3 = new LoadSpeedTester("我的方案: ");
 			for (int i = 0; i < packedFileNames.Count; i++)
 			{
 				string fileName = packedFileNames[i];
@@ -101,17 +107,17 @@ namespace ResLoad
 				if ((returnData != null) && (returnData.Length > 0)) 
 				{
 					SelfFileCount++;
+					SpeedTester3.AddLoaded ((uint)returnData.Length);
 				} 
 				else 
 				{
-					int iii = 0;
 					ConsoleMgr.LogRed ("错误:获取不到文件名为" + fileName + "的数据，该文件数据可能为空!");
 				}
 			}
 
 			if (SelfFileCount == PackedFileMgr.Ins.PackFilesCount) 
 			{
-				timer3.CostTime ();
+				SpeedTester3.CountSpeed ();
 			}
 		}
 		#endregion
