@@ -7,17 +7,17 @@ using System.Threading;
 
 namespace ResLoad
 {
-	public class ResMgr
+	public class PackedFileMgr
 	{
 		#region 单例
-		private static ResMgr _ins = null;
-		public static ResMgr Ins
+		private static PackedFileMgr _ins = null;
+		public static PackedFileMgr Ins
 		{
 			get
 			{
 				if (_ins == null) 
 				{
-					_ins = new ResMgr ();
+					_ins = new PackedFileMgr ();
 					_ins.Init ();
 				}
 
@@ -61,7 +61,7 @@ namespace ResLoad
 				FileInfo tempResFileInfo = new FileInfo (resPaths [n]);
 				if (tempResFileInfo.Extension.ToLower ().Equals (GlobalSetting.PackageExtension.ToLower())) 
 				{
-					FilePackInfoReader.Read(ref m_PackedResInfosDic, ref m_FilesPackInfoDic, resPaths[n]);
+					PackedFileInfoReader.Read(ref m_PackedResInfosDic, ref m_FilesPackInfoDic, resPaths[n]);
 				}
 			}
 		}

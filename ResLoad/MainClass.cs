@@ -77,7 +77,7 @@ namespace ResLoad
 			string filePath = (string)ar.AsyncState;
 //			ConsoleMgr.LogGreen("系统已异步加载完" + filePath);
 			AsyncfileCount++;
-			if (AsyncfileCount == ResMgr.Ins.PackFilesCount) 
+			if (AsyncfileCount == PackedFileMgr.Ins.PackFilesCount) 
 			{
 				timer2.CostTime();
 				Console.WriteLine ("");
@@ -90,14 +90,14 @@ namespace ResLoad
 		private static int SelfFileCount = 0;
 		private static void LoadFilesBySelf()
 		{
-			List<string> packedFileNames = ResMgr.Ins.PackedFileNames;
+			List<string> packedFileNames = PackedFileMgr.Ins.PackedFileNames;
 
 			TimeCounter timer3 = new TimeCounter("我的方案-");
 			for (int i = 0; i < packedFileNames.Count; i++)
 			{
 				string fileName = packedFileNames[i];
 
-				byte[] returnData = ResMgr.Ins.Load(fileName);
+				byte[] returnData = PackedFileMgr.Ins.Load(fileName);
 				if ((returnData != null) && (returnData.Length > 0)) 
 				{
 					SelfFileCount++;
@@ -109,7 +109,7 @@ namespace ResLoad
 				}
 			}
 
-			if (SelfFileCount == ResMgr.Ins.PackFilesCount) 
+			if (SelfFileCount == PackedFileMgr.Ins.PackFilesCount) 
 			{
 				timer3.CostTime ();
 			}

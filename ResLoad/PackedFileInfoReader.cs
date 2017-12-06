@@ -10,7 +10,7 @@ namespace ResLoad
 	/// <summary>
 	/// 资源包中文件信息的解读器
 	/// </summary>
-	public class FilePackInfoReader
+	public class PackedFileInfoReader
 	{
 		public static void Read(ref Dictionary<string, PackageInfo> packageInfosDic, ref Dictionary<string, PackedFileInfo> filesPackInfoDic, string packagePath)
 		{
