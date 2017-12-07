@@ -42,9 +42,9 @@ namespace ResLoad
 				tempPackageInfo.TotalSize = MyBinaryReader.ReadUint(resTotalSizeData);
 				resTotalSizeData = null;
 				//获取资源包名称
-				FileInfo resInfo = new FileInfo(packagePath);
-				string resName = resInfo.Name.Split ('.')[0];
-				packageInfosDic.Add (resName, tempPackageInfo);
+				FileInfo packageFileInfo = new FileInfo(packagePath);
+				string packageName = packageFileInfo.Name.Split ('.')[0];
+				packageInfosDic.Add (packageName, tempPackageInfo);
 
 				//2.文件信息集合区域
 				//2.1文件信息集合所占字节大小（int）
@@ -88,7 +88,7 @@ namespace ResLoad
 					fileInfosRegionSize += 4;
 					sizeData = null;
 
-					tempInfo.PackageName = resName;
+					tempInfo.PackageName = packageName;
 
 					if (!filesPackInfoDic.ContainsKey (fileName)) 
 					{

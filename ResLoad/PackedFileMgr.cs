@@ -123,21 +123,24 @@ namespace ResLoad
 		{
 			lock (DataLockObj)
 			{
-				try 
-				{
-					FileStream fs = GetPackageFileStream (fileName);
+				FileStream fs = GetPackageFileStream (fileName);
 
-					//Seek索引默认从0开始(注意,不是从1开始)
-					long newStartPos = m_FilesPackInfoDic [fileName].StartPos + beginPos;
-					fs.Seek (newStartPos, SeekOrigin.Begin);
+				//Seek索引默认从0开始(注意,不是从1开始)
+				long newStartPos = m_FilesPackInfoDic [fileName].StartPos + beginPos;
+				fs.Seek (newStartPos, SeekOrigin.Begin);
 
-					fs.Read (buffer, 0, size);
-				} 
-				catch (Exception e) 
-				{
-					Console.WriteLine (e.ToString ());
-				}
+				fs.Read (buffer, 0, size);
 			}
+		}
+
+		/// <summary>
+		/// 判断文件是否存在于资源包中
+		/// </summary>
+		/// <returns>文件是否存在于资源包中</returns>
+		/// <param name="fileName">文件名（相对路径）</param>
+		public bool IsExistFile(string fileName)
+		{
+			return m_FilesPackInfoDic.ContainsKey (fileName);
 		}
 
 		/// <summary>
