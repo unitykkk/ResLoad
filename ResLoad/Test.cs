@@ -19,11 +19,16 @@ namespace ResLoad
 			//方案1：用系统自带API
 			SpeedTester1 = new SpeedTester("系统方案: ");
 			LoadFiles ();
-			SpeedTester1.CountSpeed ();
+			double systemSpeed = SpeedTester1.GetSpeed ();
 			Console.WriteLine ("");
 
-			//方案3：用自写API
-			LoadFilesBySelf();
+			//方案2：用自写API
+			double mySpeed = LoadFilesBySelf();
+			double compare = mySpeed / systemSpeed;
+
+			Console.WriteLine ("");
+			ConsoleMgr.LogRed ("我的方案速率是系统方案速率的 " + compare.ToString("F2") + " 倍");
+
 			PackedFileMgr.Ins.Release ();
 		}
 
@@ -52,7 +57,7 @@ namespace ResLoad
 
 		#region 方案2，用自写API
 		private static int SelfFileCount = 0;
-		private static void LoadFilesBySelf()
+		private static double LoadFilesBySelf()
 		{
 			List<string> packedFileNames = PackedFileMgr.Ins.PackedFileNames;
 
@@ -75,8 +80,11 @@ namespace ResLoad
 
 			if (SelfFileCount == PackedFileMgr.Ins.PackFilesCount) 
 			{
-				SpeedTester2.CountSpeed ();
+				double mySpeed = SpeedTester2.GetSpeed ();
+				return mySpeed;
 			}
+
+			return 0;
 		}
 		#endregion
 	}

@@ -18,7 +18,7 @@ namespace ResLoad
 			TotalBytes += loadedBytes;
 		}
 
-		public void CountSpeed()
+		public double GetSpeed()
 		{
 			TimeSpan span = DateTime.Now - BeginTime;
 			double costSeconds = span.TotalSeconds;
@@ -28,6 +28,8 @@ namespace ResLoad
 			double speed = totalMB / costSeconds;
 			string str = frontStr + speed.ToString("F3") +  "MB/S";
 			ConsoleMgr.LogRed(str);
+
+			return speed;
 		}
 	}
 }
