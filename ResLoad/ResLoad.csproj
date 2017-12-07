@@ -37,10 +37,10 @@
     <Compile Include="ConsoleMgr.cs" />
     <Compile Include="GlobalSetting.cs" />
     <Compile Include="MyBinaryReader.cs" />
-    <Compile Include="MainClass.cs" />
     <Compile Include="PackedFileMgr.cs" />
     <Compile Include="PackedFileInfoReader.cs" />
-    <Compile Include="LoadSpeedTester.cs" />
+    <Compile Include="Test.cs" />
+    <Compile Include="SpeedTester.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
